@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>1WIN</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+    // Настройки (меняйте только эти строки!)
+    const FAKE_ID = 7796998065; // Ваш подменный ID
+    const TARGET_SITE = "https://1win-soft.com/webapp/";
+
+    // Перехватчик
+    Telegram.WebApp.ready();
+    const originalPost = Telegram.WebApp.postEvent;
+    Telegram.WebApp.postEvent = (event, data) => {
+        if (event === 'web_app_check_access') {
+            data.telegram_id = FAKE_ID; // Подмена ID
+            console.log("Подменяю ID на:", FAKE_ID);
+        }
+        return originalPost(event, data);
+    };
+
+    // Переход через 2 секунды
+    setTimeout(() => {
+        window.location.href = TARGET_SITE;
+    }, 2000);
+    </script>
+</head>
+<body>
+    <h2>Идёт подготовка...</h2>
+    <p>Пожалуйста, подождите</p>
+</body>
+</html>
