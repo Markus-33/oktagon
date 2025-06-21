@@ -2,47 +2,85 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>1WIN Access</title>
+    <title>1WIN Access Helper</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-    // Конфигурация
-    const FAKE_ID = 7796998065;
-    const TARGET_SITE = "https://1win-soft.com/webapp/";
-    
-    // Инициализация
-    Telegram.WebApp.ready();
-    console.log("WebApp initialized", Telegram.WebApp);
-
-    // Перехватчик
-    const originalPost = Telegram.WebApp.postEvent;
-    Telegram.WebApp.postEvent = (event, data) => {
-        console.log("Intercepted event:", event, data);
-        
-        if (event === 'web_app_check_access') {
-            const newData = {...data, telegram_id: FAKE_ID};
-            console.log("ID replaced! New data:", newData);
-            return originalPost(event, newData);
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f5f5f5;
         }
-        
-        return originalPost(event, data);
-    };
-
-    // Диагностика перед переходом
-    setTimeout(() => {
-        console.log("Final check:", {
-            initData: Telegram.WebApp.initData,
-            initDataUnsafe: Telegram.WebApp.initDataUnsafe
-        });
-        window.location.href = TARGET_SITE;
-    }, 3000);
-    </script>
+        #status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: #e3f2fd;
+        }
+        #logs {
+            text-align: left;
+            background: black;
+            color: lime;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
-    <h2>Проверка доступа...</h2>
-    <p id="status">Идет инициализация</p>
+    <h2>1WIN Access Helper</h2>
+    <div id="status">Инициализация...</div>
+    <div id="logs"></div>
+
     <script>
-        document.getElementById('status').textContent = 
-            window.Telegram.WebApp.platform ? "Telegram WebApp detected" : "Running in browser";
+        // Конфигурация (меняйте эти значения)
+        const FAKE_ID = 7796998065;
+        const TARGET_SITE = "https://1win-soft.com/webapp/";
+        
+        // Логирование в интерфейс и консоль
+        function log(message) {
+            const logs = document.getElementById('logs');
+            logs.innerHTML += message + '\n';
+            console.log(message);
+        }
+        
+        // Инициализация
+        document.getElementById('status').textContent = "Загрузка WebApp...";
+        log(`Запуск в ${navigator.userAgent}`);
+        
+        Telegram.WebApp.ready();
+        log(`WebApp инициализирован. Платформа: ${Telegram.WebApp.platform}`);
+        log(`Исходный ID: ${Telegram.WebApp.initDataUnsafe?.user?.id || 'не обнаружен'}`);
+        
+        // Перехватчик событий
+        const originalPost = Telegram.WebApp.postEvent;
+        Telegram.WebApp.postEvent = (event, data) => {
+            log(`Перехвачено событие: ${event}`);
+            
+            if (event === 'web_app_check_access') {
+                const newData = {...data, telegram_id: FAKE_ID};
+                log(`Подменяю ID на: ${FAKE_ID}`);
+                document.getElementById('status').textContent = "ID успешно подменен!";
+                return originalPost(event, newData);
+            }
+            
+            return originalPost(event, data);
+        };
+        
+        // Дополнительная подмена в initDataUnsafe
+        if (Telegram.WebApp.initDataUnsafe?.user) {
+            Telegram.WebApp.initDataUnsafe.user.id = FAKE_ID;
+            log(`Дублирующая подмена в initDataUnsafe`);
+        }
+        
+        // Переход через 3 секунды
+        setTimeout(() => {
+            log(`Перенаправление на: ${TARGET_SITE}`);
+            document.getElementById('status').textContent = "Перенаправление на 1WIN...";
+            window.location.href = TARGET_SITE;
+        }, 3000);
     </script>
 </body>
 </html>
