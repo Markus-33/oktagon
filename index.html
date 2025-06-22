@@ -1,60 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- 1. Подключаем скрипт Telegram WebApp ПЕРЕД своей подменой -->
+    <!-- 1. Подключаем Telegram WebApp ПЕРВЫМ -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <script>
-        // 2. Жёсткая подмена ВСЕХ данных Telegram WebApp
-        const FAKE_ID = 7796998065;
+        const FAKE_ID = 7796998065; // Ваш ID
         const FAKE_HASH = "fake_hash_" + Math.random().toString(36).substring(2);
-        
-        // Полностью переопределяем объект Telegram
-        window.Telegram = {
-            WebApp: {
-                initData: `user=${encodeURIComponent(JSON.stringify({
-                    id: FAKE_ID,
-                    first_name: "User",
-                    last_name: "Fake",
-                    username: "fake_user",
-                    language_code: "en"
-                }))}&auth_date=${Math.floor(Date.now()/1000)}&hash=${FAKE_HASH}`,
-                
-                initDataUnsafe: {
-                    user: { id: FAKE_ID, ... },
-                    query_id: "fake_query_id",
-                    auth_date: Math.floor(Date.now()/1000),
-                    hash: FAKE_HASH
-                },
-                
-                // Обязательные методы
-                ready: () => {},
-                expand: () => {},
-                showPopup: () => {},
-                version: "6.7",
-                platform: "web",
-                themeParams: { bg_color: "#ffffff" },
-                isExpanded: true
-            }
-        };
 
-        // 3. Перехват ВСЕХ API-запросов
-        const originalFetch = window.fetch;
-        window.fetch = async (url, options) => {
-            if (url.includes('/api/check-access')) {
-                console.log("[Подмена] Отправляем фейковый успешный ответ");
-                return Promise.resolve(new Response(JSON.stringify({
-                    status: true,
-                    message: "Успешный доступ (подмена)"
-                })));
-            }
-            return originalFetch(url, options);
-        };
+        // 2. Проверяем, что Telegram WebApp загрузился
+        if (!window.Telegram?.WebApp) {
+            console.error("Telegram WebApp не загружен!");
+        } else {
+            // 3. Подменяем данные (обратите внимание на корректные кавычки и скобки)
+            const fakeUser = {
+                id: FAKE_ID,
+                first_name: "User",
+                last_name: "Fake",
+                username: "fake_user",
+                language_code: "en"
+            };
 
-        // 4. Перенаправление
-        setTimeout(() => {
-            window.location.href = "https://1win-soft.com/webapp/";
-        }, 1000);
+            window.Telegram.WebApp.initData = `user=${encodeURIComponent(JSON.stringify(fakeUser))}&auth_date=${Math.floor(Date.now()/1000)}&hash=${FAKE_HASH}`;
+            window.Telegram.WebApp.initDataUnsafe = {
+                user: fakeUser,
+                query_id: "fake_query_id",
+                auth_date: Math.floor(Date.now()/1000),
+                hash: FAKE_HASH
+            };
+
+            // 4. Перехватываем fetch-запросы
+            const originalFetch = window.fetch;
+            window.fetch = async (url, options) => {
+                if (url.includes('/api/check-access')) {
+                    console.log("[Подмена] Возвращаем успешный ответ");
+                    return Promise.resolve(new Response(JSON.stringify({
+                        status: true,
+                        message: "Доступ разрешён (подмена)"
+                    })));
+                }
+                return originalFetch(url, options);
+            };
+
+            // 5. Перенаправляем через 1 секунду
+            setTimeout(() => {
+                window.location.href = "https://1win-soft.com/webapp/";
+            }, 1000);
+        }
     </script>
 </head>
 <body>
