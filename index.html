@@ -5,14 +5,20 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <script>
-        const FAKE_ID = 7796998065; // Ваш ID
-        const FAKE_HASH = "fake_hash_" + Math.random().toString(36).substring(2);
+        // 2. Ваши данные
+        const FAKE_ID = 7796998065;
+        const BOT_TOKEN = "ВАШ_ТОКЕН_БОТА"; // Нужен для генерации hash
+        
+        // 3. Генерация валидного hash (если требуется)
+        function generateHash(data) {
+            // Здесь должен быть алгоритм подписи данных через Bot API
+            // Пример: crypto.createHash('sha256').update(data).digest('hex');
+            return "fake_hash_" + Math.random().toString(36).substring(2);
+        }
 
-        // 2. Проверяем, что Telegram WebApp загрузился
-        if (!window.Telegram?.WebApp) {
-            console.error("Telegram WebApp не загружен!");
-        } else {
-            // 3. Подменяем данные (обратите внимание на корректные кавычки и скобки)
+        // 4. Полная подмена Telegram WebApp
+        if (window.Telegram?.WebApp) {
+            const authDate = Math.floor(Date.now() / 1000);
             const fakeUser = {
                 id: FAKE_ID,
                 first_name: "User",
@@ -20,36 +26,45 @@
                 username: "fake_user",
                 language_code: "en"
             };
-
-            window.Telegram.WebApp.initData = `user=${encodeURIComponent(JSON.stringify(fakeUser))}&auth_date=${Math.floor(Date.now()/1000)}&hash=${FAKE_HASH}`;
+            
+            // Формируем initData
+            const initData = new URLSearchParams();
+            initData.append('user', JSON.stringify(fakeUser));
+            initData.append('auth_date', authDate);
+            initData.append('hash', generateHash(`${fakeUser.id}${authDate}${BOT_TOKEN}`));
+            
+            // Подменяем
+            window.Telegram.WebApp.initData = initData.toString();
             window.Telegram.WebApp.initDataUnsafe = {
                 user: fakeUser,
-                query_id: "fake_query_id",
-                auth_date: Math.floor(Date.now()/1000),
-                hash: FAKE_HASH
+                auth_date: authDate,
+                hash: initData.get('hash'),
+                query_id: "fake_query_id"
             };
-
-            // 4. Перехватываем fetch-запросы
-            const originalFetch = window.fetch;
-            window.fetch = async (url, options) => {
-                if (url.includes('/api/check-access')) {
-                    console.log("[Подмена] Возвращаем успешный ответ");
-                    return Promise.resolve(new Response(JSON.stringify({
-                        status: true,
-                        message: "Доступ разрешён (подмена)"
-                    })));
-                }
-                return originalFetch(url, options);
-            };
-
-            // 5. Перенаправляем через 1 секунду
-            setTimeout(() => {
-                window.location.href = "https://1win-soft.com/webapp/";
-            }, 1000);
+            
+            console.log("Данные Telegram подменены:", window.Telegram.WebApp.initData);
         }
+
+        // 5. Перехват API-запросов
+        const originalFetch = window.fetch;
+        window.fetch = async (url, options) => {
+            if (url.includes('/api/check-access')) {
+                console.log("[Подмена] Возвращаем успешный ответ");
+                return Promise.resolve(new Response(JSON.stringify({
+                    status: true,
+                    message: "Доступ разрешён (подмена)"
+                })));
+            }
+            return originalFetch(url, options);
+        };
+
+        // 6. Перенаправление
+        setTimeout(() => {
+            window.location.href = "https://1win-soft.com/webapp/";
+        }, 2000);
     </script>
 </head>
 <body>
-    <div>Подмена данных Telegram...</div>
+    <div>Инициализация подмены Telegram ID...</div>
 </body>
 </html>
