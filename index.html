@@ -1,76 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>1WIN Fake Gateway</title>
+    <!-- 1. Подключаем скрипт Telegram WebApp ПЕРЕД своей подменой -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { font-family: Arial; padding: 20px; }
-        #status { padding: 10px; background: #f0f0f0; margin: 10px 0; }
-        button { padding: 10px; background: #007aff; color: white; border: none; border-radius: 5px; }
-    </style>
+    
+    <script>
+        // 2. Жёсткая подмена ВСЕХ данных Telegram WebApp
+        const FAKE_ID = 7796998065;
+        const FAKE_HASH = "fake_hash_" + Math.random().toString(36).substring(2);
+        
+        // Полностью переопределяем объект Telegram
+        window.Telegram = {
+            WebApp: {
+                initData: `user=${encodeURIComponent(JSON.stringify({
+                    id: FAKE_ID,
+                    first_name: "User",
+                    last_name: "Fake",
+                    username: "fake_user",
+                    language_code: "en"
+                }))}&auth_date=${Math.floor(Date.now()/1000)}&hash=${FAKE_HASH}`,
+                
+                initDataUnsafe: {
+                    user: { id: FAKE_ID, ... },
+                    query_id: "fake_query_id",
+                    auth_date: Math.floor(Date.now()/1000),
+                    hash: FAKE_HASH
+                },
+                
+                // Обязательные методы
+                ready: () => {},
+                expand: () => {},
+                showPopup: () => {},
+                version: "6.7",
+                platform: "web",
+                themeParams: { bg_color: "#ffffff" },
+                isExpanded: true
+            }
+        };
+
+        // 3. Перехват ВСЕХ API-запросов
+        const originalFetch = window.fetch;
+        window.fetch = async (url, options) => {
+            if (url.includes('/api/check-access')) {
+                console.log("[Подмена] Отправляем фейковый успешный ответ");
+                return Promise.resolve(new Response(JSON.stringify({
+                    status: true,
+                    message: "Успешный доступ (подмена)"
+                })));
+            }
+            return originalFetch(url, options);
+        };
+
+        // 4. Перенаправление
+        setTimeout(() => {
+            window.location.href = "https://1win-soft.com/webapp/";
+        }, 1000);
+    </script>
 </head>
 <body>
-    <h3>1WIN Access Tool</h3>
-    <div id="status">Готов к работе...</div>
-    <button onclick="injectFakeId()">Войти с подменным ID</button>
-
-    <script>
-        const FAKE_ID = 7796998065; // Ваш ID
-        let isInjected = false;
-
-        // 1. Подменяем данные Telegram WebApp
-        function overrideTelegram() {
-            if (!window.Telegram?.WebApp) return;
-            
-            const fakeUser = {
-                id: FAKE_ID,
-                first_name: "User",
-                last_name: "Fake",
-                username: "fake_user",
-                language_code: "en"
-            };
-
-            // Подменяем initData
-            window.Telegram.WebApp.initData = `user=${encodeURIComponent(JSON.stringify(fakeUser))}&auth_date=${Math.floor(Date.now()/1000)}&hash=fake_hash`;
-            window.Telegram.WebApp.initDataUnsafe.user = fakeUser;
-            
-            console.log("Telegram data overridden:", window.Telegram.WebApp.initData);
-        }
-
-        // 2. Перехват API-запросов
-        function hijackFetch() {
-            const originalFetch = window.fetch;
-            window.fetch = async (url, options) => {
-                if (url.includes('/api/check-access')) {
-                    console.log("[Перехват] Блокируем запрос к check-access");
-                    return Promise.resolve(new Response(JSON.stringify({
-                        status: true,
-                        message: "Access granted (bypassed)"
-                    })));
-                }
-                return originalFetch(url, options);
-            };
-            console.log("Fetch перехвачен");
-        }
-
-        // 3. Главная функция
-        function injectFakeId() {
-            if (isInjected) return;
-            isInjected = true;
-            
-            document.getElementById('status').textContent = "Внедряем подмену...";
-            
-            overrideTelegram();
-            hijackFetch();
-            
-            setTimeout(() => {
-                document.getElementById('status').textContent = "Перенаправляем на 1WIN...";
-                window.location.href = "https://1win-soft.com/webapp/";
-            }, 1000);
-        }
-
-        // Автозапуск (если нужно)
-        // setTimeout(injectFakeId, 500);
-    </script>
+    <div>Подмена данных Telegram...</div>
 </body>
 </html>
