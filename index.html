@@ -1,59 +1,70 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>1WIN Access</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background-color: #f0f2f5;
-        }
-        #status {
-            padding: 15px;
-            margin: 20px 0;
-            background: #e3f2fd;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div id="status">Подготовка доступа к 1WIN...</div>
+<script>
+    const FAKE_ID = 7796998065;
+    const TARGET_URL = "https://1win-soft.com/webapp/";
 
-    <script>
-        // Конфигурация
-        const FAKE_ID = 7796998065;
-        const TARGET_URL = "https://1win-soft.com/webapp/";
-        
-        // Основной код
-        document.getElementById('status').textContent = "Инициализация...";
-        
-        // Перехватываем все fetch-запросы
+    // Перехватываем все возможные методы отправки запросов
+    function overrideXHR() {
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            if (url.includes('1win-soft.com/api/check-access')) {
+                const originalSend = this.send;
+                this.send = function(body) {
+                    try {
+                        const data = JSON.parse(body);
+                        data.telegramId = FAKE_ID;
+                        body = JSON.stringify(data);
+                    } catch(e) {
+                        console.error("XHR Ошибка подмены ID:", e);
+                    }
+                    return originalSend.call(this, body);
+                };
+            }
+            return originalOpen.apply(this, arguments);
+        };
+    }
+
+    function overrideFetch() {
         const originalFetch = window.fetch;
         window.fetch = function(url, options) {
             if (url.includes('1win-soft.com/api/check-access')) {
-                console.log("[Перехват] Меняем telegramId на", FAKE_ID);
-                
                 try {
-                    if (options && options.body) {
+                    if (options?.body) {
                         const data = JSON.parse(options.body);
                         data.telegramId = FAKE_ID;
                         options.body = JSON.stringify(data);
                     }
                 } catch(e) {
-                    console.error("Ошибка подмены ID:", e);
+                    console.error("Fetch Ошибка подмены ID:", e);
                 }
             }
             return originalFetch(url, options);
         };
+    }
 
-        // Переходим на сайт через 2 секунды
-        setTimeout(() => {
-            document.getElementById('status').textContent = "Перенаправление на 1WIN...";
-            window.location.href = TARGET_URL;
-        }, 2000);
-    </script>
-</body>
-</html>
+    // Подменяем initData Telegram WebApp
+    function overrideTelegramData() {
+        if (window.Telegram?.WebApp?.initData) {
+            try {
+                const params = new URLSearchParams(window.Telegram.WebApp.initData);
+                if (params.has('user')) {
+                    const user = JSON.parse(params.get('user'));
+                    user.id = FAKE_ID;
+                    params.set('user', JSON.stringify(user));
+                    window.Telegram.WebApp.initData = params.toString();
+                }
+            } catch(e) {
+                console.error("Ошибка подмены Telegram данных:", e);
+            }
+        }
+    }
+
+    // Инициализация
+    overrideXHR();
+    overrideFetch();
+    
+    // Даем время на выполнение перехватов перед загрузкой 1WIN
+    setTimeout(() => {
+        overrideTelegramData();
+        window.location.href = TARGET_URL;
+    }, 3000);
+</script>
