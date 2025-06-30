@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Лесной костёр</title>
+    <title>Лесной житель</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -223,7 +223,7 @@
         <div id="background"></div>
         <canvas id="renderCanvas"></canvas>
         <div id="uiContainer">
-            <h1 class="game-title">Лесной костёр</h1>
+            <h1 class="game-title">Лесной житель</h1>
             <div class="buttons-container">
                 <div class="menu-btn" id="playBtn">
                     <div class="btn-inner">
@@ -276,9 +276,9 @@
             const delta = Math.min(now - lastTime, 100);
             lastTime = now;
             
-            time += delta * 0.0025;
-            const moveX = Math.sin(time * 0.7) * 1.5;
-            const moveY = Math.cos(time * 0.5) * 1.5;
+            time += delta * 0.003;
+            const moveX = Math.sin(time * 0.7) * 2.0;
+            const moveY = Math.cos(time * 0.5) * 2.0;
             sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
             
             requestAnimationFrame(animateBackground);
