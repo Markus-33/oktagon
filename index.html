@@ -3,6 +3,7 @@
 <head>
     <title>Лесной костёр</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Old+Standard+TT:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -53,16 +54,16 @@
             align-items: center;
             pointer-events: none;
             z-index: 1;
-            animation: uiTilt 6s infinite alternate ease-in-out;
+            animation: uiTilt 3s infinite alternate ease-in-out;
         }
         @keyframes uiTilt {
-            0% { transform: perspective(800px) rotateX(6deg); }
-            100% { transform: perspective(800px) rotateX(-6deg); }
+            0% { transform: perspective(800px) rotateX(15deg); }
+            100% { transform: perspective(800px) rotateX(-15deg); }
         }
         .game-title {
-            margin-bottom: 4vh;
+            margin-bottom: 8vh; /* Увеличено с 4vh */
             color: #e8c070;
-            font-size: clamp(24px, 8vw, 52px);
+            font-size: clamp(32px, 9vw, 64px);
             font-family: 'Cinzel Decorative';
             text-shadow: 
                 2px 2px 0 #8b4513,
@@ -70,7 +71,7 @@
             letter-spacing: 3px;
             text-transform: uppercase;
             z-index: 2;
-            padding: 1.5vh 3vw;
+            padding: 4vh 2vw;
             background: url('https://github.com/Markus-33/oktagon/blob/main/123%20(1).jpg?raw=true') center/cover no-repeat;
             border-radius: 15px;
             border: 2px solid #e8c070;
@@ -78,18 +79,24 @@
             overflow: hidden;
             animation: btnTilt 6s infinite alternate ease-in-out;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -25px;
         }
         .buttons-container {
             perspective: 1000px;
-            width: 85%;
-            max-width: 400px;
+            width: 70%; /* Уменьшено с 85% */
+            max-width: 320px; /* Уменьшено с 400px */
         }
         .menu-btn {
-            width: 100%;
+            width: 90%; /* Добавлено ограничение ширины */
+            max-width: 320px; /* Добавлено ограничение */
             height: 12vh;
             max-height: 90px;
             min-height: 70px;
-            margin: 1.5vh 0;
+            margin: 1.5vh auto; /* Центрирование */
             perspective: 1000px;
             cursor: pointer;
             pointer-events: auto;
@@ -98,6 +105,11 @@
             overflow: hidden;
             border: 2px solid white;
             animation: btnTilt 6s infinite alternate ease-in-out;
+        }
+        #backBtn {
+            display: none;
+            width: 60%;
+            margin: 0 auto;
         }
         @keyframes btnTilt {
             0% { transform: perspective(800px) rotateX(6deg); }
@@ -144,7 +156,6 @@
             transform: rotateY(var(--rotate-angle)) scale(0.95);
             transition: transform 0.15s ease-out;
         }
-
         .menu-btn::after {
             content: '';
             position: absolute;
@@ -158,7 +169,6 @@
             z-index: 3;
             opacity: 0;
         }
-
         @keyframes flow {
             0% { 
                 left: 0; 
@@ -172,26 +182,30 @@
                 opacity: 0;
             }
         }
-
         @media (max-width: 768px) {
             .buttons-container {
-                width: 75%;
+                width: 65%; /* Уменьшено с 75% */
+                max-width: 280px; /* Добавлено ограничение */
             }
             .game-title {
-                margin-bottom: 3vh;
-                padding: 1vh 4vw;
+                margin-bottom: 6vh; /* Увеличено с 3vh */
+                padding: 3vh 4vw;
             }
             .menu-btn {
                 height: 10vh;
                 min-height: 60px;
-                margin: 1.5vh 0;
+                margin: 1.5vh auto; /* Центрирование */
+            }
+            #backBtn {
+                width: 70%; /* Уменьшено с 80% */
             }
         }
-
         @media (max-height: 600px) {
             .game-title {
-                font-size: clamp(20px, 6vw, 32px);
-                margin-bottom: 2vh;
+                font-size: clamp(24px, 6vw, 40px);
+                margin-bottom: 4vh; /* Увеличено с 2vh */
+                padding: 2vh 3vw;
+                min-height: 90px;
             }
             .menu-btn {
                 height: 8vh;
@@ -235,6 +249,12 @@
                     </div>
                 </div>
             </div>
+            <div class="menu-btn" id="backBtn">
+                <div class="btn-inner">
+                    <div class="btn-front"><span class="btn-text">НАЗАД</span></div>
+                    <div class="btn-back"><span class="btn-text">НАЗАД</span></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -245,7 +265,7 @@
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
         
-        // Анимация фона
+        // Анимация фона (ускоренная)
         const sceneWrapper = document.getElementById('sceneWrapper');
         let time = 0;
         let lastTime = Date.now();
@@ -255,7 +275,7 @@
             const delta = Math.min(now - lastTime, 100);
             lastTime = now;
             
-            time += delta * 0.0012;
+            time += delta * 0.0025; // Увеличено с 0.0012 до 0.0025 (в 2 раза быстрее)
             const moveX = Math.sin(time * 0.7) * 1.0;
             const moveY = Math.cos(time * 0.5) * 1.0;
             sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
@@ -269,35 +289,37 @@
         let lastFlipTime = Date.now();
         
         function flipButtons() {
-            if (!isAnimating) return;
-            
-            const now = Date.now();
-            if (now - lastFlipTime < 5000) {
-                flipTimeout = setTimeout(flipButtons, 5000 - (now - lastFlipTime));
-                return;
+    if (!isAnimating) return;
+    
+    const now = Date.now();
+    if (now - lastFlipTime < 5000) {
+        flipTimeout = setTimeout(flipButtons, 5000 - (now - lastFlipTime));
+        return;
+    }
+    
+    lastFlipTime = now;
+    
+    document.querySelectorAll('.menu-btn:not(.btn-pressed)').forEach((btn, i) => {
+        setTimeout(() => {
+            if (isAnimating && btn.style.display !== 'none' && getComputedStyle(btn).display !== 'none') {
+                btn.classList.toggle('flip');
+                updateButtonAngles();
             }
-            
-            lastFlipTime = now;
-            
-            document.querySelectorAll('.menu-btn:not(.btn-pressed)').forEach((btn, i) => {
-                setTimeout(() => {
-                    if (isAnimating) {
-                        btn.classList.toggle('flip');
-                        updateButtonAngles();
-                    }
-                }, i * 100);
-            });
-            
-            flipTimeout = setTimeout(flipButtons, 5000);
-        }
+        }, i * 100);
+    });
+    
+    flipTimeout = setTimeout(flipButtons, 5000);
+}
         
         function updateButtonAngles() {
             document.querySelectorAll('.menu-btn').forEach(btn => {
-                const inner = btn.querySelector('.btn-inner');
-                if (btn.classList.contains('flip')) {
-                    inner.style.setProperty('--rotate-angle', '165deg');
-                } else {
-                    inner.style.setProperty('--rotate-angle', '15deg');
+                if (btn.style.display !== 'none') {
+                    const inner = btn.querySelector('.btn-inner');
+                    if (btn.classList.contains('flip')) {
+                        inner.style.setProperty('--rotate-angle', '165deg');
+                    } else {
+                        inner.style.setProperty('--rotate-angle', '15deg');
+                    }
                 }
             });
         }
@@ -314,11 +336,45 @@
             clearTimeout(flipTimeout);
         }
         
+        // Переключение между меню и контентом
+        function showContent() {
+            document.querySelector('.game-title').style.display = 'none';
+            document.querySelector('.buttons-container').style.display = 'none';
+            document.getElementById('backBtn').style.display = 'block';
+        }
+        
+        function showMenu() {
+            document.querySelector('.game-title').style.display = 'flex';
+            document.querySelector('.buttons-container').style.display = 'block';
+            document.getElementById('backBtn').style.display = 'none';
+        }
+        
         // Обработчики кнопок
-        document.getElementById('exitBtn').addEventListener('click', () => {
-            window.close(); // Закрытие без подтверждения
+        document.getElementById('playBtn').addEventListener('click', () => {
+            showContent();
         });
         
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            showContent();
+        });
+        
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            showContent();
+        });
+        
+        document.getElementById('backBtn').addEventListener('click', () => {
+            showMenu();
+        });
+        
+        document.getElementById('exitBtn').addEventListener('click', () => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                Telegram.WebApp.close();
+            } else {
+                window.close();
+            }
+        });
+        
+        // Общие обработчики для всех кнопок
         document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('mousedown', () => {
                 stopAnimation();
