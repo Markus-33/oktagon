@@ -24,7 +24,6 @@
             width: 103%;
             height: 103%;
             overflow: hidden;
-            will-change: transform;
         }
         #background {
             position: absolute;
@@ -33,7 +32,6 @@
             width: 100%;
             height: 100%;
             background: url('https://github.com/Markus-33/oktagon/blob/main/generated_image%20(1).jpg?raw=true') center/cover no-repeat;
-            backface-visibility: hidden;
         }
         #renderCanvas {
             width: 100%;
@@ -57,7 +55,6 @@
             pointer-events: none;
             z-index: 1;
             animation: uiTilt 6s infinite alternate ease-in-out;
-            will-change: transform;
         }
         @keyframes uiTilt {
             0% { transform: perspective(800px) rotateX(6deg); }
@@ -82,7 +79,6 @@
             overflow: hidden;
             animation: btnTilt 6s infinite alternate ease-in-out;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
-            will-change: transform;
         }
         .buttons-container {
             perspective: 1000px;
@@ -102,7 +98,6 @@
             overflow: hidden;
             border: 2px solid white;
             animation: btnTilt 6s infinite alternate ease-in-out;
-            will-change: transform;
         }
         @keyframes btnTilt {
             0% { transform: perspective(800px) rotateX(6deg); }
@@ -115,7 +110,6 @@
             transform-style: preserve-3d;
             transition: transform 0.4s ease-out;
             border-radius: 25px;
-            will-change: transform;
         }
         .btn-front, .btn-back {
             position: absolute;
@@ -179,7 +173,6 @@
             }
         }
 
-        /* Оптимизации для мобильных устройств */
         @media (max-width: 768px) {
             #uiContainer {
                 margin-top: 2vh;
@@ -244,46 +237,34 @@
     </div>
 
     <script>
-        // Оптимизированный JavaScript для мобильных устройств
+        // Инициализация сцены
         const canvas = document.getElementById("renderCanvas");
-        const engine = new BABYLON.Engine(canvas, true, {
-            preserveDrawingBuffer: true,
-            stencil: true,
-            disableWebGL2Support: false
-        });
-        
-        // Упрощенная сцена для экономии ресурсов
+        const engine = new BABYLON.Engine(canvas, true);
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-        scene.autoClear = false;
         
-        // Отключаем ненужные функции для мобильных устройств
-        scene.forceShowBoundingBoxes = false;
-        scene.skipFrustumClipping = true;
-        
-        // Анимация фона с requestAnimationFrame и ограничением FPS
+        // Анимация фона
         const sceneWrapper = document.getElementById('sceneWrapper');
-        let lastTime = 0;
-        const fpsLimit = 30;
-        const frameInterval = 1000 / fpsLimit;
+        let time = 0;
+        let lastTime = Date.now();
         
-        function animateBackground(timestamp) {
-            if (!lastTime || timestamp - lastTime >= frameInterval) {
-                lastTime = timestamp;
-                
-                const time = timestamp * 0.0012;
-                const moveX = Math.sin(time * 0.7) * 1.0;
-                const moveY = Math.cos(time * 0.5) * 1.0;
-                sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
-            }
+        function animateBackground() {
+            const now = Date.now();
+            const delta = Math.min(now - lastTime, 100);
+            lastTime = now;
+            
+            time += delta * 0.0012;
+            const moveX = Math.sin(time * 0.7) * 1.0;
+            const moveY = Math.cos(time * 0.5) * 1.0;
+            sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
+            
             requestAnimationFrame(animateBackground);
         }
-        requestAnimationFrame(animateBackground);
         
-        // Оптимизированная анимация кнопок
+        // Анимация кнопок (как в оригинале)
         let flipTimeout;
         let isAnimating = true;
-        let lastFlipTime = 0;
+        let lastFlipTime = Date.now();
         
         function flipButtons() {
             if (!isAnimating) return;
@@ -296,8 +277,7 @@
             
             lastFlipTime = now;
             
-            const buttons = document.querySelectorAll('.menu-btn:not(.btn-pressed)');
-            buttons.forEach((btn, i) => {
+            document.querySelectorAll('.menu-btn:not(.btn-pressed)').forEach((btn, i) => {
                 setTimeout(() => {
                     if (isAnimating) {
                         btn.classList.toggle('flip');
@@ -310,8 +290,7 @@
         }
         
         function updateButtonAngles() {
-            const buttons = document.querySelectorAll('.menu-btn');
-            buttons.forEach(btn => {
+            document.querySelectorAll('.menu-btn').forEach(btn => {
                 const inner = btn.querySelector('.btn-inner');
                 if (btn.classList.contains('flip')) {
                     inner.style.setProperty('--rotate-angle', '165deg');
@@ -322,7 +301,6 @@
         }
         
         function startAnimation() {
-            if (isAnimating) return;
             isAnimating = true;
             lastFlipTime = Date.now();
             updateButtonAngles();
@@ -334,69 +312,57 @@
             clearTimeout(flipTimeout);
         }
         
-        startAnimation();
+        // Обработчики кнопок (как в оригинале)
+        document.getElementById('exitBtn').addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                window.close();
+            }
+        });
         
-        // Оптимизированные обработчики событий
-        function setupButtonEvents() {
-            const exitBtn = document.getElementById('exitBtn');
-            exitBtn.addEventListener('click', () => {
-                if (confirm('Вы уверены, что хотите выйти?')) {
-                    window.close();
-                }
+        document.querySelectorAll('.menu-btn').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                stopAnimation();
+                btn.classList.add('btn-pressed');
             });
             
-            const buttons = document.querySelectorAll('.menu-btn');
-            buttons.forEach(btn => {
-                // Обработчик для нажатия
-                const handlePressStart = (e) => {
-                    if (e.cancelable) e.preventDefault();
-                    stopAnimation();
-                    btn.classList.add('btn-pressed');
-                };
-                
-                // Обработчик для отпускания
-                const handlePressEnd = (e) => {
-                    if (e.cancelable) e.preventDefault();
-                    btn.classList.remove('btn-pressed');
-                    startAnimation();
-                };
-                
-                // Добавляем обработчики для мыши и тача
-                btn.addEventListener('mousedown', handlePressStart);
-                btn.addEventListener('mouseup', handlePressEnd);
-                btn.addEventListener('mouseleave', handlePressEnd);
-                btn.addEventListener('touchstart', handlePressStart, { passive: false });
-                btn.addEventListener('touchend', handlePressEnd, { passive: false });
+            btn.addEventListener('mouseup', () => {
+                btn.classList.remove('btn-pressed');
+                startAnimation();
             });
-        }
-        
-        // Инициализация после загрузки
+            
+            btn.addEventListener('mouseleave', () => {
+                btn.classList.remove('btn-pressed');
+            });
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                stopAnimation();
+                btn.classList.add('btn-pressed');
+            });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.classList.remove('btn-pressed');
+                startAnimation();
+            });
+        });
+
+        // Запуск при загрузке
         document.addEventListener('DOMContentLoaded', () => {
-            setupButtonEvents();
+            animateBackground();
+            startAnimation();
             
-            // Оптимизация для скрытия/показа вкладки
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) {
                     stopAnimation();
-                    engine.stopRenderLoop();
                 } else {
                     lastFlipTime = Date.now();
                     startAnimation();
-                    engine.runRenderLoop(() => scene.render());
                 }
             });
-            
-            // Запуск рендер-лупа
+
             engine.runRenderLoop(() => scene.render());
-            
-            // Обработка изменения размера с дебаунсом
-            let resizeTimeout;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    engine.resize();
-                }, 200);
-            });
+            window.addEventListener('resize', () => engine.resize());
         });
     </script>
 </body>
