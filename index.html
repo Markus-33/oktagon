@@ -55,7 +55,7 @@
             pointer-events: none;
             z-index: 1;
             animation: uiTilt 3s infinite alternate ease-in-out;
-            margin-top: 0vh; /* Увеличен отступ сверху */
+            padding-top: 2.5vh; /* Увеличен отступ сверху */
         }
         @keyframes uiTilt {
             0% { transform: perspective(800px) rotateX(15deg); }
@@ -161,19 +161,20 @@
             transform: rotateY(var(--rotate-angle)) scale(0.95);
             transition: transform 0.15s ease-out;
         }
-        .menu-btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: white;
-            box-shadow: 0 0 4px white;
-            animation: flow 4s linear infinite;
-            z-index: 3;
-            opacity: 0;
-        }
+       .menu-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: white;
+    box-shadow: 0 0 4px white;
+    z-index: 3;
+    opacity: 0; /* Изначально скрыта */
+    animation: flow 4s linear infinite;
+    animation-delay: 4s; /* Только это нужно для задержки */
+}
         @keyframes flow {
             0% { 
                 left: 0; 
