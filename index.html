@@ -55,7 +55,7 @@
             pointer-events: none;
             z-index: 1;
             animation: uiTilt 3s infinite alternate ease-in-out;
-            padding-top: 10vh; /* Увеличен отступ сверху */
+            padding-top: 5vh; /* Увеличен отступ сверху */
         }
         @keyframes uiTilt {
             0% { transform: perspective(800px) rotateX(15deg); }
@@ -112,7 +112,7 @@
         #backBtn {
             display: none;
             width: 60%;
-            margin: 2vh auto 0; /* Добавлен отступ сверху и центрирование */
+            margin: -1vh auto 0; /* Добавлен отступ сверху и центрирование */
             height: 12vh;
             position: relative; /* Добавлено для лучшего позиционирования */
         }
@@ -284,7 +284,7 @@
             const delta = Math.min(now - lastTime, 100);
             lastTime = now;
             
-            time += delta * 0.003;
+            time += delta * 0.005;
             const moveX = Math.sin(time * 0.7) * 1.5;
             const moveY = Math.cos(time * 0.5) * 1.5;
             sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
