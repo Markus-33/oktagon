@@ -55,7 +55,7 @@
             pointer-events: none;
             z-index: 1;
             animation: uiTilt 3s infinite alternate ease-in-out;
-            padding-top: 2.5vh; /* Увеличен отступ сверху */
+            padding-top: 2.5vh;
         }
         @keyframes uiTilt {
             0% { transform: perspective(800px) rotateX(15deg); }
@@ -112,9 +112,9 @@
         #backBtn {
             display: none;
             width: 60%;
-            margin: -5vh auto 0; /* Добавлен отступ сверху и центрирование */
+            margin: -5vh auto 0;
             height: 12vh;
-            position: relative; /* Добавлено для лучшего позиционирования */
+            position: relative;
         }
         @keyframes btnTilt {
             0% { transform: perspective(800px) rotateX(6deg); }
@@ -161,55 +161,27 @@
             transform: rotateY(var(--rotate-angle)) scale(0.95);
             transition: transform 0.15s ease-out;
         }
-       .menu-btn::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 5px;
-    height: 100%;
-    background: white;
-    box-shadow: 0 0 4px white;
-    z-index: 3;
-    opacity: 0; /* Изначально скрыта */
-    animation: flow 4s linear infinite;
-    animation-delay: 4s; /* Только это нужно для задержки */
-}
-        @keyframes flow {
-            0% { 
-                left: 0; 
-                opacity: 1;
-            }
-            20% { 
-                left: calc(100% - 1px);
-                opacity: 1;
-            }
-            20.1%, 100% { 
-                opacity: 0;
-            }
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: white;
+            box-shadow: 0 0 4px white;
+            z-index: 3;
+            opacity: 0;
+            animation: flow 4s linear infinite;
+            animation-delay: 4s;
         }
-        @media (max-width: 768px) {
-            .buttons-container {
-                width: 65%;
-                max-width: 280px;
-            }
-            .game-title {
-                margin-bottom: 3vh;
-                padding: 3vh 4vw;
-            }
-            .menu-btn {
-                height: 12vh;
-                min-height: 70px;
-                margin: 2vh auto;
-            }
-            #backBtn {
-                width: 70%;
-            }
+        @keyframes flow {
+            0% { left: 0; opacity: 1; }
+            20% { left: calc(100% - 1px); opacity: 1; }
+            20.1%, 100% { opacity: 0; }
         }
         @media (max-height: 600px) {
-            #uiContainer {
-                padding-top: 5vh; /* Меньший отступ для маленьких экранов */
-            }
+            #uiContainer { padding-top: 5vh; }
             .game-title {
                 font-size: clamp(24px, 6vw, 40px);
                 margin-bottom: 2vh;
@@ -221,9 +193,7 @@
                 min-height: 60px;
                 margin: 1.8vh auto;
             }
-            .btn-text {
-                font-size: clamp(14px, 3vw, 20px);
-            }
+            .btn-text { font-size: clamp(14px, 3vw, 20px); }
         }
     </style>
 </head>
@@ -275,7 +245,7 @@
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
         
-        // Анимация фона с увеличенной амплитудой
+        // Анимация фона
         const sceneWrapper = document.getElementById('sceneWrapper');
         let time = 0;
         let lastTime = Date.now();
@@ -311,7 +281,7 @@
             
             document.querySelectorAll('.menu-btn:not(.btn-pressed)').forEach((btn, i) => {
                 setTimeout(() => {
-                    if (isAnimating && btn.style.display !== 'none' && getComputedStyle(btn).display !== 'none') {
+                    if (isAnimating && btn.style.display !== 'none') {
                         btn.classList.toggle('flip');
                         updateButtonAngles();
                     }
@@ -325,11 +295,7 @@
             document.querySelectorAll('.menu-btn').forEach(btn => {
                 if (btn.style.display !== 'none') {
                     const inner = btn.querySelector('.btn-inner');
-                    if (btn.classList.contains('flip')) {
-                        inner.style.setProperty('--rotate-angle', '165deg');
-                    } else {
-                        inner.style.setProperty('--rotate-angle', '15deg');
-                    }
+                    inner.style.setProperty('--rotate-angle', btn.classList.contains('flip') ? '165deg' : '15deg');
                 }
             });
         }
@@ -361,54 +327,36 @@
         
         // Инициализация Telegram WebApp
         function initTelegram() {
-            if (window.Telegram && window.Telegram.WebApp) {
+            if (window.Telegram?.WebApp) {
                 Telegram.WebApp.expand();
                 Telegram.WebApp.enableClosingConfirmation();
                 
-                const setupButton = (btnId, handler) => {
-                    const btn = document.getElementById(btnId);
-                    if (btn) {
-                        btn.addEventListener('click', handler);
-                        btn.addEventListener('touchend', handler);
-                    }
-                };
-                
-                setupButton('playBtn', () => showContent());
-                setupButton('helpBtn', () => showContent());
-                setupButton('settingsBtn', () => showContent());
-                setupButton('backBtn', () => showMenu());
-                setupButton('exitBtn', () => Telegram.WebApp.close());
+                document.getElementById('playBtn').addEventListener('click', showContent);
+                document.getElementById('helpBtn').addEventListener('click', showContent);
+                document.getElementById('settingsBtn').addEventListener('click', showContent);
+                document.getElementById('backBtn').addEventListener('click', showMenu);
+                document.getElementById('exitBtn').addEventListener('click', () => Telegram.WebApp.close());
             }
         }
         
         // Обработчики событий для кнопок
         function setupButtonEvents() {
             document.querySelectorAll('.menu-btn').forEach(btn => {
-                btn.addEventListener('mousedown', () => {
+                const handleStart = () => {
                     stopAnimation();
                     btn.classList.add('btn-pressed');
-                });
+                };
                 
-                btn.addEventListener('mouseup', () => {
+                const handleEnd = () => {
                     btn.classList.remove('btn-pressed');
                     startAnimation();
-                });
+                };
                 
-                btn.addEventListener('mouseleave', () => {
-                    btn.classList.remove('btn-pressed');
-                });
-                
-                btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    stopAnimation();
-                    btn.classList.add('btn-pressed');
-                });
-                
-                btn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    btn.classList.remove('btn-pressed');
-                    startAnimation();
-                });
+                btn.addEventListener('mousedown', handleStart);
+                btn.addEventListener('mouseup', handleEnd);
+                btn.addEventListener('mouseleave', handleEnd);
+                btn.addEventListener('touchstart', handleStart);
+                btn.addEventListener('touchend', handleEnd);
             });
         }
         
@@ -420,12 +368,8 @@
             setupButtonEvents();
             
             document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    stopAnimation();
-                } else {
-                    lastFlipTime = Date.now();
-                    startAnimation();
-                }
+                if (document.hidden) stopAnimation();
+                else { lastFlipTime = Date.now(); startAnimation(); }
             });
 
             engine.runRenderLoop(() => scene.render());
