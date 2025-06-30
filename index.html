@@ -1,1 +1,403 @@
-555
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Лесной костёр</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Old+Standard+TT:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Old Standard TT';
+            touch-action: manipulation;
+            background: #1a2f1a;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #sceneWrapper {
+            position: fixed;
+            top: -1.5%;
+            left: -1.5%;
+            width: 103%;
+            height: 103%;
+            overflow: hidden;
+            will-change: transform;
+        }
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://github.com/Markus-33/oktagon/blob/main/generated_image%20(1).jpg?raw=true') center/cover no-repeat;
+            backface-visibility: hidden;
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            position: absolute;
+            z-index: 0;
+            opacity: 0;
+        }
+        #uiContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            margin-top: 0.45%;
+            align-items: center;
+            pointer-events: none;
+            z-index: 1;
+            animation: uiTilt 6s infinite alternate ease-in-out;
+            will-change: transform;
+        }
+        @keyframes uiTilt {
+            0% { transform: perspective(800px) rotateX(6deg); }
+            100% { transform: perspective(800px) rotateX(-6deg); }
+        }
+        .game-title {
+            margin-bottom: 4vh;
+            color: #e8c070;
+            font-size: clamp(24px, 8vw, 52px);
+            font-family: 'Cinzel Decorative';
+            text-shadow: 
+                2px 2px 0 #8b4513,
+                4px 4px 0 rgba(0,0,0,0.7);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            z-index: 2;
+            padding: 1.5vh 3vw;
+            background: url('https://github.com/Markus-33/oktagon/blob/main/123%20(1).jpg?raw=true') center/cover no-repeat;
+            border-radius: 15px;
+            border: 2px solid #e8c070;
+            position: relative;
+            overflow: hidden;
+            animation: btnTilt 6s infinite alternate ease-in-out;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+            will-change: transform;
+        }
+        .buttons-container {
+            perspective: 1000px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .menu-btn {
+            width: 100%;
+            height: 12vh;
+            max-height: 90px;
+            margin: 1.5vh 0;
+            perspective: 1000px;
+            cursor: pointer;
+            pointer-events: auto;
+            position: relative;
+            border-radius: 25px;
+            overflow: hidden;
+            border: 2px solid white;
+            animation: btnTilt 6s infinite alternate ease-in-out;
+            will-change: transform;
+        }
+        @keyframes btnTilt {
+            0% { transform: perspective(800px) rotateX(6deg); }
+            100% { transform: perspective(800px) rotateX(-6deg); }
+        }
+        .btn-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.4s ease-out;
+            border-radius: 25px;
+            will-change: transform;
+        }
+        .btn-front, .btn-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://github.com/Markus-33/oktagon/blob/main/444.jpg?raw=true') center/cover no-repeat;
+            border-radius: 25px;
+        }
+        .btn-text {
+            font-size: clamp(16px, 4vw, 26px);
+            font-weight: bold;
+            font-family: 'Old Standard TT';
+            color: white;
+            position: relative;
+            z-index: 2;
+            padding: 1vh 3vw;
+            border-radius: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .btn-back {
+            transform: rotateY(180deg);
+        }
+        .flip .btn-inner {
+            transform: rotateY(180deg);
+        }
+        .btn-pressed .btn-inner {
+            transform: rotateY(var(--rotate-angle)) scale(0.95);
+            transition: transform 0.15s ease-out;
+        }
+
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: white;
+            box-shadow: 0 0 4px white;
+            animation: flow 4s linear infinite;
+            z-index: 3;
+            opacity: 0;
+        }
+
+        @keyframes flow {
+            0% { 
+                left: 0; 
+                opacity: 1;
+            }
+            20% { 
+                left: calc(100% - 1px);
+                opacity: 1;
+            }
+            20.1%, 100% { 
+                opacity: 0;
+            }
+        }
+
+        /* Оптимизации для мобильных устройств */
+        @media (max-width: 768px) {
+            #uiContainer {
+                margin-top: 2vh;
+            }
+            .game-title {
+                margin-bottom: 3vh;
+                padding: 1vh 4vw;
+            }
+            .menu-btn {
+                height: 10vh;
+                margin: 1vh 0;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .game-title {
+                font-size: clamp(20px, 6vw, 32px);
+                margin-bottom: 2vh;
+            }
+            .menu-btn {
+                height: 8vh;
+            }
+            .btn-text {
+                font-size: clamp(14px, 3vw, 20px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="sceneWrapper">
+        <div id="background"></div>
+        <canvas id="renderCanvas"></canvas>
+        <div id="uiContainer">
+            <h1 class="game-title">Лесной костёр</h1>
+            <div class="buttons-container">
+                <div class="menu-btn" id="playBtn">
+                    <div class="btn-inner">
+                        <div class="btn-front"><span class="btn-text">ИГРАТЬ</span></div>
+                        <div class="btn-back"><span class="btn-text">ИГРАТЬ</span></div>
+                    </div>
+                </div>
+                <div class="menu-btn" id="helpBtn">
+                    <div class="btn-inner">
+                        <div class="btn-front"><span class="btn-text">ИНСТРУКЦИЯ</span></div>
+                        <div class="btn-back"><span class="btn-text">ИНСТРУКЦИЯ</span></div>
+                    </div>
+                </div>
+                <div class="menu-btn" id="settingsBtn">
+                    <div class="btn-inner">
+                        <div class="btn-front"><span class="btn-text">НАСТРОЙКИ</span></div>
+                        <div class="btn-back"><span class="btn-text">НАСТРОЙКИ</span></div>
+                    </div>
+                </div>
+                <div class="menu-btn" id="exitBtn">
+                    <div class="btn-inner">
+                        <div class="btn-front"><span class="btn-text">ВЫХОД</span></div>
+                        <div class="btn-back"><span class="btn-text">ВЫХОД</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Оптимизированный JavaScript для мобильных устройств
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true, {
+            preserveDrawingBuffer: true,
+            stencil: true,
+            disableWebGL2Support: false
+        });
+        
+        // Упрощенная сцена для экономии ресурсов
+        const scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+        scene.autoClear = false;
+        
+        // Отключаем ненужные функции для мобильных устройств
+        scene.forceShowBoundingBoxes = false;
+        scene.skipFrustumClipping = true;
+        
+        // Анимация фона с requestAnimationFrame и ограничением FPS
+        const sceneWrapper = document.getElementById('sceneWrapper');
+        let lastTime = 0;
+        const fpsLimit = 30;
+        const frameInterval = 1000 / fpsLimit;
+        
+        function animateBackground(timestamp) {
+            if (!lastTime || timestamp - lastTime >= frameInterval) {
+                lastTime = timestamp;
+                
+                const time = timestamp * 0.0012;
+                const moveX = Math.sin(time * 0.7) * 1.0;
+                const moveY = Math.cos(time * 0.5) * 1.0;
+                sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
+            }
+            requestAnimationFrame(animateBackground);
+        }
+        requestAnimationFrame(animateBackground);
+        
+        // Оптимизированная анимация кнопок
+        let flipTimeout;
+        let isAnimating = true;
+        let lastFlipTime = 0;
+        
+        function flipButtons() {
+            if (!isAnimating) return;
+            
+            const now = Date.now();
+            if (now - lastFlipTime < 5000) {
+                flipTimeout = setTimeout(flipButtons, 5000 - (now - lastFlipTime));
+                return;
+            }
+            
+            lastFlipTime = now;
+            
+            const buttons = document.querySelectorAll('.menu-btn:not(.btn-pressed)');
+            buttons.forEach((btn, i) => {
+                setTimeout(() => {
+                    if (isAnimating) {
+                        btn.classList.toggle('flip');
+                        updateButtonAngles();
+                    }
+                }, i * 100);
+            });
+            
+            flipTimeout = setTimeout(flipButtons, 5000);
+        }
+        
+        function updateButtonAngles() {
+            const buttons = document.querySelectorAll('.menu-btn');
+            buttons.forEach(btn => {
+                const inner = btn.querySelector('.btn-inner');
+                if (btn.classList.contains('flip')) {
+                    inner.style.setProperty('--rotate-angle', '165deg');
+                } else {
+                    inner.style.setProperty('--rotate-angle', '15deg');
+                }
+            });
+        }
+        
+        function startAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            lastFlipTime = Date.now();
+            updateButtonAngles();
+            flipButtons();
+        }
+        
+        function stopAnimation() {
+            isAnimating = false;
+            clearTimeout(flipTimeout);
+        }
+        
+        startAnimation();
+        
+        // Оптимизированные обработчики событий
+        function setupButtonEvents() {
+            const exitBtn = document.getElementById('exitBtn');
+            exitBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены, что хотите выйти?')) {
+                    window.close();
+                }
+            });
+            
+            const buttons = document.querySelectorAll('.menu-btn');
+            buttons.forEach(btn => {
+                // Обработчик для нажатия
+                const handlePressStart = (e) => {
+                    if (e.cancelable) e.preventDefault();
+                    stopAnimation();
+                    btn.classList.add('btn-pressed');
+                };
+                
+                // Обработчик для отпускания
+                const handlePressEnd = (e) => {
+                    if (e.cancelable) e.preventDefault();
+                    btn.classList.remove('btn-pressed');
+                    startAnimation();
+                };
+                
+                // Добавляем обработчики для мыши и тача
+                btn.addEventListener('mousedown', handlePressStart);
+                btn.addEventListener('mouseup', handlePressEnd);
+                btn.addEventListener('mouseleave', handlePressEnd);
+                btn.addEventListener('touchstart', handlePressStart, { passive: false });
+                btn.addEventListener('touchend', handlePressEnd, { passive: false });
+            });
+        }
+        
+        // Инициализация после загрузки
+        document.addEventListener('DOMContentLoaded', () => {
+            setupButtonEvents();
+            
+            // Оптимизация для скрытия/показа вкладки
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    stopAnimation();
+                    engine.stopRenderLoop();
+                } else {
+                    lastFlipTime = Date.now();
+                    startAnimation();
+                    engine.runRenderLoop(() => scene.render());
+                }
+            });
+            
+            // Запуск рендер-лупа
+            engine.runRenderLoop(() => scene.render());
+            
+            // Обработка изменения размера с дебаунсом
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    engine.resize();
+                }, 200);
+            });
+        });
+    </script>
+</body>
+</html>
