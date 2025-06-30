@@ -17,6 +17,10 @@
             touch-action: manipulation;
             background: #1a2f1a;
             -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
         #sceneWrapper {
             position: fixed;
@@ -85,6 +89,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-touch-callout: none;
         }
         .buttons-container {
             perspective: 1000px;
@@ -108,6 +113,7 @@
             border: 2px solid white;
             animation: btnTilt 6s infinite alternate ease-in-out;
             touch-action: manipulation;
+            -webkit-touch-callout: none;
         }
         #backBtn {
             display: none;
@@ -150,6 +156,7 @@
             border-radius: 20px;
             background-color: rgba(0, 0, 0, 0.3);
             text-align: center;
+            -webkit-touch-callout: none;
         }
         .btn-back {
             transform: rotateY(180deg);
@@ -239,129 +246,134 @@
     </div>
 
     <script>
-        // Инициализация сцены
-        const canvas = document.getElementById("renderCanvas");
-        const engine = new BABYLON.Engine(canvas, true);
-        const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-        
-        // Анимация фона
-        const sceneWrapper = document.getElementById('sceneWrapper');
-        let time = 0;
-        let lastTime = Date.now();
-        
-        function animateBackground() {
-            const now = Date.now();
-            const delta = Math.min(now - lastTime, 100);
-            lastTime = now;
-            
-            time += delta * 0.004;
-            const moveX = Math.sin(time * 0.7) * 1.5;
-            const moveY = Math.cos(time * 0.5) * 1.5;
-            sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
-            
-            requestAnimationFrame(animateBackground);
-        }
-        
-        // Анимация кнопок
-        let flipTimeout;
-        let isAnimating = true;
-        let lastFlipTime = Date.now();
-        
-        function flipButtons() {
-            if (!isAnimating) return;
-            
-            const now = Date.now();
-            if (now - lastFlipTime < 5000) {
-                flipTimeout = setTimeout(flipButtons, 5000 - (now - lastFlipTime));
-                return;
-            }
-            
-            lastFlipTime = now;
-            
-            document.querySelectorAll('.menu-btn:not(.btn-pressed)').forEach((btn, i) => {
-                setTimeout(() => {
-                    if (isAnimating && btn.style.display !== 'none') {
-                        btn.classList.toggle('flip');
-                        updateButtonAngles();
-                    }
-                }, i * 100);
-            });
-            
-            flipTimeout = setTimeout(flipButtons, 5000);
-        }
-        
-        function updateButtonAngles() {
-            document.querySelectorAll('.menu-btn').forEach(btn => {
-                if (btn.style.display !== 'none') {
-                    const inner = btn.querySelector('.btn-inner');
-                    inner.style.setProperty('--rotate-angle', btn.classList.contains('flip') ? '165deg' : '15deg');
-                }
-            });
-        }
-        
-        function startAnimation() {
-            isAnimating = true;
-            lastFlipTime = Date.now();
-            updateButtonAngles();
-            flipButtons();
-        }
-        
-        function stopAnimation() {
-            isAnimating = false;
-            clearTimeout(flipTimeout);
-        }
-        
-        // Переключение между меню и контентом
-        function showContent() {
-            document.querySelector('.game-title').style.display = 'none';
-            document.querySelector('.buttons-container').style.display = 'none';
-            document.getElementById('backBtn').style.display = 'block';
-        }
-        
-        function showMenu() {
-            document.querySelector('.game-title').style.display = 'flex';
-            document.querySelector('.buttons-container').style.display = 'block';
-            document.getElementById('backBtn').style.display = 'none';
-        }
-        
-        // Инициализация Telegram WebApp
-        function initTelegram() {
-            if (window.Telegram?.WebApp) {
-                Telegram.WebApp.expand();
-                Telegram.WebApp.enableClosingConfirmation();
-                
-                document.getElementById('playBtn').addEventListener('click', showContent);
-                document.getElementById('helpBtn').addEventListener('click', showContent);
-                document.getElementById('settingsBtn').addEventListener('click', showContent);
-                document.getElementById('backBtn').addEventListener('click', showMenu);
-                document.getElementById('exitBtn').addEventListener('click', () => Telegram.WebApp.close());
-            }
-        }
-        
-        // Обработчики событий для кнопок
-        function setupButtonEvents() {
-            document.querySelectorAll('.menu-btn').forEach(btn => {
-                const handleStart = () => {
-                    stopAnimation();
-                    btn.classList.add('btn-pressed');
-                };
-                
-                const handleEnd = () => {
-                    btn.classList.remove('btn-pressed');
-                    startAnimation();
-                };
-                
-                btn.addEventListener('mousedown', handleStart);
-                btn.addEventListener('mouseup', handleEnd);
-                btn.addEventListener('mouseleave', handleEnd);
-                btn.addEventListener('touchstart', handleStart);
-                btn.addEventListener('touchend', handleEnd);
-            });
-        }
-        
-        // Запуск при загрузке
         document.addEventListener('DOMContentLoaded', () => {
+            // Запрещаем выделение текста
+            document.addEventListener('selectstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            // Инициализация сцены
+            const canvas = document.getElementById("renderCanvas");
+            const engine = new BABYLON.Engine(canvas, true);
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+            
+            // Анимация фона
+            const sceneWrapper = document.getElementById('sceneWrapper');
+            let time = 0;
+            let lastTime = Date.now();
+            
+            function animateBackground() {
+                const now = Date.now();
+                const delta = Math.min(now - lastTime, 100);
+                lastTime = now;
+                
+                time += delta * 0.004;
+                const moveX = Math.sin(time * 0.7) * 1.5;
+                const moveY = Math.cos(time * 0.5) * 1.5;
+                sceneWrapper.style.transform = `translate(${moveX}%, ${moveY}%)`;
+                
+                requestAnimationFrame(animateBackground);
+            }
+            
+            // Анимация кнопок
+            let flipTimeout;
+            let isAnimating = true;
+            let lastFlipTime = Date.now();
+            
+            function flipButtons() {
+                if (!isAnimating) return;
+                
+                const now = Date.now();
+                if (now - lastFlipTime < 5000) {
+                    flipTimeout = setTimeout(flipButtons, 5000 - (now - lastFlipTime));
+                    return;
+                }
+                
+                lastFlipTime = now;
+                
+                document.querySelectorAll('.menu-btn:not(.btn-pressed)').forEach((btn, i) => {
+                    setTimeout(() => {
+                        if (isAnimating && btn.style.display !== 'none') {
+                            btn.classList.toggle('flip');
+                            updateButtonAngles();
+                        }
+                    }, i * 100);
+                });
+                
+                flipTimeout = setTimeout(flipButtons, 5000);
+            }
+            
+            function updateButtonAngles() {
+                document.querySelectorAll('.menu-btn').forEach(btn => {
+                    if (btn.style.display !== 'none') {
+                        const inner = btn.querySelector('.btn-inner');
+                        inner.style.setProperty('--rotate-angle', btn.classList.contains('flip') ? '165deg' : '15deg');
+                    }
+                });
+            }
+            
+            function startAnimation() {
+                isAnimating = true;
+                lastFlipTime = Date.now();
+                updateButtonAngles();
+                flipButtons();
+            }
+            
+            function stopAnimation() {
+                isAnimating = false;
+                clearTimeout(flipTimeout);
+            }
+            
+            // Переключение между меню и контентом
+            function showContent() {
+                document.querySelector('.game-title').style.display = 'none';
+                document.querySelector('.buttons-container').style.display = 'none';
+                document.getElementById('backBtn').style.display = 'block';
+            }
+            
+            function showMenu() {
+                document.querySelector('.game-title').style.display = 'flex';
+                document.querySelector('.buttons-container').style.display = 'block';
+                document.getElementById('backBtn').style.display = 'none';
+            }
+            
+            // Инициализация Telegram WebApp
+            function initTelegram() {
+                if (window.Telegram?.WebApp) {
+                    Telegram.WebApp.expand();
+                    Telegram.WebApp.enableClosingConfirmation();
+                    
+                    document.getElementById('playBtn').addEventListener('click', showContent);
+                    document.getElementById('helpBtn').addEventListener('click', showContent);
+                    document.getElementById('settingsBtn').addEventListener('click', showContent);
+                    document.getElementById('backBtn').addEventListener('click', showMenu);
+                    document.getElementById('exitBtn').addEventListener('click', () => Telegram.WebApp.close());
+                }
+            }
+            
+            // Обработчики событий для кнопок
+            function setupButtonEvents() {
+                document.querySelectorAll('.menu-btn').forEach(btn => {
+                    const handleStart = () => {
+                        stopAnimation();
+                        btn.classList.add('btn-pressed');
+                    };
+                    
+                    const handleEnd = () => {
+                        btn.classList.remove('btn-pressed');
+                        startAnimation();
+                    };
+                    
+                    btn.addEventListener('mousedown', handleStart);
+                    btn.addEventListener('mouseup', handleEnd);
+                    btn.addEventListener('mouseleave', handleEnd);
+                    btn.addEventListener('touchstart', handleStart);
+                    btn.addEventListener('touchend', handleEnd);
+                });
+            }
+            
             animateBackground();
             startAnimation();
             initTelegram();
