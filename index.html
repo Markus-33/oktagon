@@ -59,11 +59,11 @@
             pointer-events: none;
             z-index: 1;
             animation: uiTilt 3s infinite alternate ease-in-out;
-            padding-top: 2.5vh;
+            padding-top: 2.5vh;           
         }
         @keyframes uiTilt {
-            0% { transform: perspective(800px) rotateX(15deg); }
-            100% { transform: perspective(800px) rotateX(-15deg); }
+            0% { transform: perspective(800px) rotateX(15deg) scale(0.85); }
+            100% { transform: perspective(800px) rotateX(-15deg) scale(0.85); }
         }
         .game-title {
             margin-bottom: 4vh;
@@ -123,8 +123,8 @@
             position: relative;
         }
         @keyframes btnTilt {
-            0% { transform: perspective(800px) rotateX(6deg); }
-            100% { transform: perspective(800px) rotateX(-6deg); }
+            0% { transform: perspective(800px) rotateX(6deg) scale(0.85); }
+            100% { transform: perspective(800px) rotateX(-6deg) scale(0.85); }
         }
         .btn-inner {
             position: relative;
